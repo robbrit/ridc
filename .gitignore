@@ -1,0 +1,12 @@
+# Vim files
+*.swp
+
+# Compiled files
+riddick
+
+# Go packages
+pkg
+src/github.com
+
+# Profiling output
+*.prof
