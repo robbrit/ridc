@@ -22,7 +22,7 @@ def do_all_the_things():
     db = riddick.Riddick("localhost", 3001)
 
     last = None
-    times = 100000
+    times = 10000
 
     # first stick 100 elements in
     for i in range(times):
