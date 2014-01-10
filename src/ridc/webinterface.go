@@ -30,6 +30,7 @@ import (
 * GET /:id
 * GET /:index/:value
 * POST /
+* PUT /:id
 * DELETE /:id
 * DELETE /:index/:value
 
@@ -102,6 +103,14 @@ func StartWebInterface(database *Database) {
       return 500, "{}"
     }
     return 200, "{\"id\": \"" + id + "\"}"
+  })
+
+  app.Put("/:id", func(w http.ResponseWriter, r *http.Request) (int, string) {
+    id := r.FormValue("id")
+    data := r.FormValue("data")
+
+    database.Update(id, data)
+    return 200, "{}"
   })
 
   app.Delete("/:id", func(params martini.Params) (int, string) {

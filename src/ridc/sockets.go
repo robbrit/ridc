@@ -33,6 +33,7 @@ var deleteIndex = regexp.MustCompile("^DELETE /indexes/([a-z0-9]+)")
 var post = regexp.MustCompile("^POST ([^\n]+)")
 var deleteByIndex = regexp.MustCompile("^DELETE /([a-z0-9]+)/([^\n]+)")
 var del = regexp.MustCompile("^DELETE /([a-z0-9-]+)")
+var put = regexp.MustCompile("^PUT /([a-z0-9-]+) ([^\n]+)")
 
 func HandleConnection(conn net.Conn, database *Database) {
   reader := bufio.NewReader(conn)
@@ -109,12 +110,15 @@ func HandleConnection(conn net.Conn, database *Database) {
         writer.WriteString("{\"id\": \"" + id + "\"}\n")
       }
     } else if match := deleteByIndex.FindStringSubmatch(input); match != nil {
-      log.Println("Delete by index")
       database.DeleteByIndex(match[1], match[2])
       writer.WriteString("{}\n")
     } else if match := del.FindStringSubmatch(input); match != nil {
-      log.Println("Delete by ID")
       database.DeleteById(match[1])
+      writer.WriteString("{}\n")
+    } else if match := put.FindStringSubmatch(input); match != nil {
+      id := match[1]
+      data := match[2]
+      database.Update(id, data)
       writer.WriteString("{}\n")
     } else {
       // unrecognized input

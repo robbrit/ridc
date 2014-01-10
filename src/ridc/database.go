@@ -36,18 +36,6 @@ func CreateDatabase() *Database {
 }
 
 func (db *Database) Add(unparsed string) (string, error) {
-  // first parse the JSON
-  var doc map[string]interface{}
-
-  bytes := []byte(unparsed)
-  err := json.Unmarshal(bytes, &doc)
-
-  if err != nil {
-    return "", err
-  }
-
-  realDoc := make(Document)
-
   // give me an ID
   uuid, err := uuid.NewV4()
 
@@ -56,6 +44,25 @@ func (db *Database) Add(unparsed string) (string, error) {
   }
 
   id := uuid.String()
+
+  db.addAt(id, unparsed)
+
+  return id, nil
+}
+
+// Add a document at a particular ID, create indexes
+func (db *Database) addAt(id, unparsed string) error {
+  // first parse the JSON
+  var doc map[string]interface{}
+
+  bytes := []byte(unparsed)
+  err := json.Unmarshal(bytes, &doc)
+
+  if err != nil {
+    return err
+  }
+
+  realDoc := make(Document)
 
   realDoc["id"] = id
 
@@ -72,7 +79,19 @@ func (db *Database) Add(unparsed string) (string, error) {
     idx.Add(&realDoc)
   }
 
-  return id, nil
+  return nil
+}
+
+// Upsert a document into the DB
+func (db *Database) Update(id, unparsed string) {
+  doc, exists := db.Documents[id]
+
+  if exists {
+    // it exists, remove it from all indexes
+    db.clearFromIndexes(doc)
+  }
+
+  db.addAt(id, unparsed)
 }
 
 // Look up an element by id
@@ -93,6 +112,12 @@ func (db *Database) FindByIndex(field, value string) (*list.List) {
   return index.Find(value)
 }
 
+func (db *Database) clearFromIndexes(doc *Document) {
+  for _, idx := range db.indexes {
+    idx.Remove(doc)
+  }
+}
+
 // Delete element by id
 func (db *Database) DeleteById(id string) (int, error) {
   doc, exists := db.Documents[id]
@@ -102,9 +127,7 @@ func (db *Database) DeleteById(id string) (int, error) {
   }
 
   // need to delete the document
-  for _, idx := range db.indexes {
-    idx.Remove(doc)
-  }
+  db.clearFromIndexes(doc)
 
   delete(db.Documents, id)
 

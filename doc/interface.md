@@ -18,7 +18,6 @@
 
 # TODO
 
-* PUT
 * Sharding (first local to goroutines, later to separate machines)
 * Compression
 * Indexes on non-strings
