@@ -51,18 +51,19 @@ func HandleConnection(conn net.Conn, database *Database) {
       }
     }
 
-    log.Println(input)
-
     // parse input
     if input == "GET /\n" {
       // Just output version
-      writer.WriteString("DocDB version " + VERSION + "\n")
+      log.Println("Incoming GET /")
+      writer.WriteString("Ridc version " + VERSION + "\n")
     } else if input == "GET /indexes\n" {
       // Get all the indexes
+      log.Println("Incoming GET /indexes")
       IOGetIndexes(database, writer)
       writer.WriteString("\n")
     } else if match := postIndex.FindStringSubmatch(input); match != nil {
       // Create an index
+      log.Println("Incoming POST /indexes")
       err := database.AddIndex(match[1])
       if err != nil {
         log.Println("Error on creating index: ", err)
@@ -72,6 +73,7 @@ func HandleConnection(conn net.Conn, database *Database) {
       }
     } else if match := deleteIndex.FindStringSubmatch(input); match != nil {
       // Delete an index
+      log.Println("Incoming delete index")
       err := database.RemoveIndex(match[1])
       if err != nil {
         log.Println("Error on removing index: ", err)
@@ -81,10 +83,12 @@ func HandleConnection(conn net.Conn, database *Database) {
       }
     } else if match := getByIndex.FindStringSubmatch(input); match != nil {
       // Get all the documents with field = value
+      log.Println("Incoming GET by index")
       IOGetByIndex(database, writer, match[1], match[2])
       writer.WriteString("\n")
     } else if match := getById.FindStringSubmatch(input); match != nil {
       // Get document by ID
+      log.Println("Incoming GET by ID")
       doc, exists := database.FindById(match[1])
       if !exists {
         writer.WriteString("{}\n")
@@ -93,12 +97,14 @@ func HandleConnection(conn net.Conn, database *Database) {
 
         if err != nil {
           log.Println("Error on marshalling document: ", err)
-          writer.WriteString("{}")
+          writer.WriteString("{}\n")
         } else {
           writer.Write(output)
+          writer.WriteString("\n")
         }
       }
     } else if match := post.FindStringSubmatch(input); match != nil {
+      log.Println("Incoming POST")
       input := match[1]
 
       id, err := database.Add(input)
@@ -110,12 +116,15 @@ func HandleConnection(conn net.Conn, database *Database) {
         writer.WriteString("{\"id\": \"" + id + "\"}\n")
       }
     } else if match := deleteByIndex.FindStringSubmatch(input); match != nil {
+      log.Println("Incoming DELETE by index")
       database.DeleteByIndex(match[1], match[2])
       writer.WriteString("{}\n")
     } else if match := del.FindStringSubmatch(input); match != nil {
+      log.Println("Incoming DELETE by ID")
       database.DeleteById(match[1])
       writer.WriteString("{}\n")
     } else if match := put.FindStringSubmatch(input); match != nil {
+      log.Println("Incoming PUT")
       id := match[1]
       data := match[2]
       database.Update(id, data)
